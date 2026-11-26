@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090b0a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="REPLAY">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>REPLAY — Music</title>
+<style>
+:root{color-scheme:dark;--bg:#090b0a;--panel:#141816;--muted:#89948d;--green:#b8ff55;--line:#252d28}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 80% -10%,#263b25 0,transparent 40%),var(--bg);color:#f4f7f3;font:15px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:env(safe-area-inset-top) 16px 150px}
+header{display:flex;justify-content:space-between;align-items:center;padding:18px 2px 22px}.brand{font-weight:900;letter-spacing:4px;font-size:22px}.brand span{color:var(--green)}.tag,.hint,footer{color:var(--muted)}
+h1{font-size:29px;margin:8px 0}.sub{color:var(--muted);margin:8px 0 20px}
+.search{display:flex;gap:8px;background:#171d19;border:1px solid var(--line);border-radius:15px;padding:7px}.search input{min-width:0;flex:1;background:none;border:0;color:white;padding:8px;font-size:16px}
+.btn{border:0;border-radius:11px;background:var(--green);color:#10150d;font-weight:800;padding:11px 14px}
+.tabs,.chips{display:flex;gap:8px;overflow:auto;margin:17px 0}.tab,.small{border:1px solid var(--line);background:#202822;color:#fff;border-radius:20px;padding:9px 13px;white-space:nowrap}.tab.active{color:var(--green);border-color:#526849}
+.section{display:flex;justify-content:space-between;align-items:center;margin:22px 0 12px}.section h2{font-size:17px;margin:0}
+.sourcegrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.source{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;text-decoration:none;color:white}.source b,.source small{display:block}.source small{color:var(--muted);margin-top:5px}
+.result{display:flex;gap:10px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:9px;margin-top:8px}.result img,.thumb{flex:none;width:50px;height:50px;border-radius:8px;object-fit:cover}.thumb{background:#202822}
+.meta{min-width:0;flex:1}.meta b,.meta small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.meta small{color:var(--muted);font-size:12px;margin-top:4px}
+.heart{border:0;background:none;color:var(--green);font-size:19px}.empty{border:1px dashed #39433c;border-radius:15px;padding:22px;text-align:center;color:var(--muted);line-height:1.5}
+footer{font-size:11px;line-height:1.5;margin-top:24px}.hidden{display:none!important}.status{font-size:11px;line-height:1.6;margin:0 0 10px}.more{width:100%;margin-top:12px}
+.player{position:fixed;bottom:0;left:0;right:0;background:rgba(12,16,13,.97);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom));backdrop-filter:blur(16px)}
+.now{display:flex;align-items:center;gap:10px}.nowmeta{min-width:0;flex:1}.nowmeta b,.nowmeta small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nowmeta small{color:var(--muted);font-size:11px;margin-top:3px}
+.controls{display:flex;gap:8px;align-items:center}.play{width:42px;height:42px;border-radius:50%;border:0;background:var(--green);font-size:18px;color:#10150d}
+.progress{width:100%;accent-color:var(--green);margin-top:9px}.time{display:flex;justify-content:space-between;color:var(--muted);font-size:10px}audio{display:none}
+.filterline{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px;margin:12px 2px}.filterline input{accent-color:var(--green);width:16px;height:16px}
+</style>
+</head>
+<body>
+<header><div class="brand">RE<span>PLAY</span></div><div class="tag">YOUR MUSIC SPACE</div></header>
+<h1>Включай своё.</h1>
+<div class="sub">Поиск по открытым музыкальным каталогам.</div>
+<div class="search"><input id="q" placeholder="Трек, артист или альбом…" autocomplete="off"><button class="btn" id="searchBtn">Найти</button></div>
+<label class="filterline"><input type="checkbox" id="versions"> Показывать ремиксы, каверы и альтернативные версии</label>
+<div class="tabs">
+<button class="tab active" data-tab="discover">Обзор</button><button class="tab" data-tab="favorites">Избранное</button><button class="tab" data-tab="library">Моя музыка</button>
+</div>
+<section id="discover">
+<div class="section"><h2>Другие каталоги</h2><span class="hint">Внешний поиск</span></div>
+<div class="sourcegrid"><a class="source" id="yt" target="_blank" rel="noopener"><b>YouTube</b><small>Открыть поиск</small></a><a class="source" id="sc" target="_blank" rel="noopener"><b>SoundCloud</b><small>Открыть поиск</small></a></div>
+<div class="section"><h2>Результаты</h2><span class="hint">Audius · Jamendo · Archive</span></div>
+<div class="chips hidden" id="chips"></div><div class="status hint hidden" id="status"></div>
+<div id="results"><div class="empty">Введи название песни или исполнителя. REPLAY проверит несколько открытых каталогов.</div></div>
+</section>
+<section id="favorites" class="hidden"><div class="section"><h2>Избранное</h2></div><div id="favlist" class="empty">Здесь появятся сохранённые треки.</div></section>
+<section id="library" class="hidden">
+<div class="section"><h2>Твоя библиотека</h2></div><label class="btn">＋ Добавить аудио<input id="files" type="file" accept="audio/*" multiple hidden></label><p class="hint">Выбери аудиофайлы из приложения «Файлы».</p><div id="localList"></div>
+</section>
+<footer>REPLAY ищет и воспроизводит доступные записи из Audius, Jamendo и Internet Archive. Это не полный коммерческий каталог: популярные релизы могут отсутствовать. Длительность и полнота записи зависят от метаданных источника. YouTube и SoundCloud открываются отдельно. Фоновое воспроизведение зависит от iPhone, браузера и источника.</footer>
+<div class="player">
+<div class="now"><div class="nowmeta"><b id="title">Ничего не играет</b><small id="artist">Выбери трек</small></div><div class="controls"><button class="small" id="prev">↶</button><button class="play" id="toggle">▶</button><button class="small" id="next">↷</button></div></div>
+<input class="progress" id="seek" type="range" min="0" max="100" value="0"><div class="time"><span id="elapsed">0:00</span><span id="duration">0:00</span></div>
+</div>
+<audio id="audio" playsinline preload="metadata"></audio>
+<script>
+'use strict';
+const $=id=>document.getElementById(id),audio=$('audio');
+const JAMENDO_CLIENT_ID='709fa152';
+const PAGE_SIZE=25,MIN_DURATION=60,ARCHIVE_ROWS=30;
+const SOURCES={audius:'Audius',jamendo:'Jamendo',archive:'Internet Archive'};
+const KEYS=Object.keys(SOURCES);
+let state=null,searchToken=0,visibleResults=[],localTracks=[],objectUrls=[];
+let favorites=[];try{favorites=JSON.parse(localStorage.getItem('replay_favorites_v3')||'[]');if(!Array.isArray(favorites))favorites=[];}catch(e){favorites=[];}
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\p{L}\p{N}\s]/gu,' ').replace(/\s+/g,' ').trim();
+const formatTime=n=>Number.isFinite(n)&&n>=0?Math.floor(n/60)+':'+String(Math.floor(n%60)).padStart(2,'0'):'0:00';
+const durationText=t=>t.duration?formatTime(t.duration):'длительность неизвестна';
+function saveFavorites(){try{localStorage.setItem('replay_favorites_v3',JSON.stringify(favorites));}catch(e){}}
+async function fetchJSON(url,timeout=14000){
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeout);
+ try{const response=await fetch(url,{signal:controller.signal});if(!response.ok)throw new Error('HTTP '+response.status);return await response.json();}
+ finally{clearTimeout(timer);}
+}
+function parseDuration(v){
+ if(Array.isArray(v))v=v[0];if(v==null||v==='')return null;
+ if(/^\d+(\.\d+)?$/.test(String(v))){const n=Number(v);return n>0?n:null;}
+ const p=String(v).split(':').map(Number);if(p.length<2||p.length>3||p.some(x=>!Number.isFinite(x)))return null;
+ const n=p.reduce((a,x)=>a*60+x,0);return n>0?n:null;
+}
+const VERSION_RE=/\b(remix|remixed|cover|karaoke|nightcore|slowed|speed\s?up|sped\s?up|8d|edit|bootleg|mashup|instrumental\s?version|tribute|rework|flip)\b/i;
+const STOP_WORDS=new Set(['the','a','an','and','or','of','to','in','on','official','audio','music','feat','ft']);
+function tokensFor(q){return norm(q).split(' ').filter(x=>x.length>1&&!STOP_WORDS.has(x));}
+function trackText(t){return norm([t.title,t.artist,t.album].join(' '));}
+function isVersion(t){return VERSION_RE.test([t.title,t.album||'',t.version||''].join(' '));}
+function scoreTrack(t,query,tokens){
+ const title=norm(t.title),artist=norm(t.artist),album=norm(t.album),all=norm(title+' '+artist+' '+album);
+ const titleTokens=tokensFor(title),artistTokens=tokensFor(artist);
+ const hits=tokens.filter(x=>all.split(' ').some(w=>w===x||(x.length>3&&w.startsWith(x))));
+ const coverage=tokens.length?hits.length/tokens.length:0;
+ if(!tokens.length||coverage<.5)return -1;
+ let score=coverage*45;
+ if(title===query)score+=100;
+ if(artist===query)score+=90;
+ if(all===query)score+=85;
+ if(title.includes(query))score+=45;
+ if(artist.includes(query))score+=35;
+ const titleHits=tokens.filter(x=>titleTokens.some(w=>w===x||w.startsWith(x))).length;
+ const artistHits=tokens.filter(x=>artistTokens.some(w=>w===x||w.startsWith(x))).length;
+ score+=titleHits*7+artistHits*5;
+ if(t.duration)score+=2;
+ if(t.src==='audius')score+=2;
+ if(isVersion(t))score-=35;
+ return score;
+}
+function addResults(tracks,query,tokens){
+ for(const t of tracks){
+  if(!t||!t.url||!t.title||!t.artist)continue;
+  if(t.duration&&t.duration<MIN_DURATION)continue;
+  if(!$('versions').checked&&isVersion(t))continue;
+  t.score=scoreTrack(t,query,tokens);if(t.score<0)continue;
+  const old=state.all.find(x=>x.id===t.id);if(!old)state.all.push(t);
+ }
+ const unique=new Map();
+ for(const t of state.all){
+  const key=norm(t.artist)+'|'+norm(t.title),old=unique.get(key);
+  if(!old||t.score>old.score||(!old.duration&&t.duration))unique.set(key,t);
+ }
+ state.view=[...unique.values()].sort((a,b)=>b.score-a.score);
+}
+async function searchAudius(term,page){
+ const params=new URLSearchParams({query:term,limit:String(PAGE_SIZE),offset:String(page*PAGE_SIZE),app_name:'REPLAY'});
+ let json;
+ try{json=await fetchJSON('https://api.audius.co/v1/tracks/search?'+params);}
+ catch(e){json=await fetchJSON('https://api.audius.co/v1/search/full?query='+encodeURIComponent(term)+'&kind=tracks&limit='+PAGE_SIZE+'&offset='+(page*PAGE_SIZE)+'&app_name=REPLAY');}
+ const rows=Array.isArray(json.data)?json.data:(json.data?.tracks||[]);
+ return{tracks:rows.filter(t=>t&&t.id&&t.title&&!t.is_delete&&!t.is_unlisted&&t.is_streamable!==false&&!t.is_stream_gated).map(t=>({
+ id:'audius:'+t.id,src:'audius',title:t.title,artist:t.user?.name||t.user?.handle||'Audius',album:'',
+ duration:Number(t.duration)>0?Number(t.duration):null,art:t.artwork?.['480x480']||t.artwork?.['150x150']||'',
+ url:'https://api.audius.co/v1/tracks/'+encodeURIComponent(t.id)+'/stream?app_name=REPLAY'
+ })),more:rows.length>=PAGE_SIZE};
+}
+async function searchJamendo(term,page){
+ const p=new URLSearchParams({client_id:JAMENDO_CLIENT_ID,format:'json',limit:String(PAGE_SIZE),offset:String(page*PAGE_SIZE),search:term,type:'single albumtrack',audioformat:'mp32',imagesize:'200'});
+ const j=await fetchJSON('https://api.jamendo.com/v3.0/tracks/?'+p);
+ if(j?.headers?.status!=='success')throw new Error(j?.headers?.error_message||'Jamendo недоступен');
+ const rows=j.results||[];
+ return{tracks:rows.filter(t=>t&&t.id&&t.audio&&t.name).map(t=>({
+ id:'jamendo:'+t.id,src:'jamendo',title:t.name,artist:t.artist_name||'Jamendo',album:t.album_name||'',
+ duration:parseDuration(t.duration),art:t.image||t.album_image||'',url:t.audio,license:t.license_ccurl?'Creative Commons':''
+ })),more:rows.length>=PAGE_SIZE};
+}
+async function searchArchive(term,page,token){
+ const words=tokensFor(term);if(!words.length)return{tracks:[],more:false};
+ const q='mediatype:audio AND ('+words.map(w=>'title:'+JSON.stringify(w)+' OR creator:'+JSON.stringify(w)).join(' AND ')+')';
+ const p=new URLSearchParams({q,rows:String(ARCHIVE_ROWS),page:String(page+1),output:'json','sort[]':'downloads desc'});
+ ['identifier','title','creator'].forEach(x=>p.append('fl[]',x));
+ const j=await fetchJSON('https://archive.org/advancedsearch.php?'+p);
+ const docs=j?.response?.docs||[],out=[];
+ for(const doc of docs){
+  if(token!==searchToken)break;
+  try{
+   const m=await fetchJSON('https://archive.org/metadata/'+encodeURIComponent(doc.identifier));
+   const files=(m.files||[]).filter(f=>f.name&&/\.(mp3|ogg|oga|flac|wav|m4a)$/i.test(f.name)&&!/(sample|thumb|spectrogram|waveform|__ia_|itemimage)/i.test(f.name)&&!(Number(f.size)>0&&Number(f.size)<50000));
+   const meta=m.metadata||{};
+   const candidates=files.map(f=>({file:f,duration:parseDuration(f.length||meta.runtime||meta.duration),rank:(/\.mp3$/i.test(f.name)?5:/\.m4a$/i.test(f.name)?4:/\.flac$/i.test(f.name)?3:1)})).filter(x=>!(x.duration&&x.duration<MIN_DURATION));
+   candidates.sort((a,b)=>(b.duration?1:0)-(a.duration?1:0)||(b.duration||0)-(a.duration||0)||b.rank-a.rank);
+   if(!candidates.length)continue;
+   const f=candidates[0].file,creator=Array.isArray(meta.creator)?meta.creator.join(', '):(meta.creator||doc.creator||'Internet Archive');
+   out.push({id:'archive:'+doc.identifier,src:'archive',title:Array.isArray(meta.title)?meta.title[0]:(meta.title||doc.title||doc.identifier),artist:creator,album:'',duration:candidates[0].duration,art:'https://archive.org/services/img/'+encodeURIComponent(doc.identifier),url:'https://archive.org/download/'+encodeURIComponent(doc.identifier)+'/'+f.name.split('/').map(encodeURIComponent).join('/')});
+  }catch(e){}
+ }
+ return{tracks:out,more:docs.length>=ARCHIVE_ROWS};
+}
+async function search(){
+ const term=$('q').value.trim();if(!term)return;
+ $('yt').href='https://www.youtube.com/results?search_query='+encodeURIComponent(term);
+ $('sc').href='https://soundcloud.com/search?q='+encodeURIComponent(term);
+ const query=norm(term),tokens=tokensFor(term);if(!tokens.length)return;
+ const token=++searchToken;
+ state={term,query,tokens,all:[],view:[],pages:{audius:0,jamendo:0,archive:0},more:{audius:true,jamendo:true,archive:true},status:{},pending:0,filter:'all'};
+ $('results').innerHTML='<div class="empty">Ищу треки во всех каталогах…</div>';render();
+ await runSearches(KEYS,token);
+}
+async function runSearches(keys,token){
+ state.pending+=keys.length;render();
+ await Promise.all(keys.map(async key=>{
+  try{
+   let result;
+   if(key==='audius')result=await searchAudius(state.term,state.pages[key]);
+   if(key==='jamendo')result=await searchJamendo(state.term,state.pages[key]);
+   if(key==='archive')result=await searchArchive(state.term,state.pages[key],token);
+   if(token!==searchToken)return;
+   state.pages[key]++;state.more[key]=result.more;state.status[key]='ok';addResults(result.tracks,state.query,state.tokens);
+  }catch(e){if(token!==searchToken)return;state.more[key]=false;state.status[key]='error';}
+  finally{if(token===searchToken){state.pending--;render();}}
+ }));
+}
+function render(){
+ if(!state)return;
+ $('chips').classList.remove('hidden');$('status').classList.remove('hidden');
+ $('chips').innerHTML=['all',...KEYS].map(k=>`<button class="tab ${state.filter===k?'active':''}" data-filter="${k}">${k==='all'?'Все':SOURCES[k]} ${k==='all'?state.view.length:state.view.filter(t=>t.src===k).length}</button>`).join('');
+ $('status').textContent=KEYS.map(k=>SOURCES[k]+': '+(state.status[k]==='ok'?'готово':state.status[k]==='error'?'недоступен':'ищу…')).join(' · ');
+ const list=state.filter==='all'?state.view:state.view.filter(t=>t.src===state.filter);visibleResults=list;
+ let markup=list.map((t,i)=>`<div class="result">${t.art?`<img src="${esc(t.art)}" alt="" loading="lazy" onerror="this.style.display='none'">`:'<div class="thumb"></div>'}<div class="meta"><b>${esc(t.title)}</b><small>${esc(t.artist)} · ${esc(durationText(t))} · ${SOURCES[t.src]}${t.license?' · '+esc(t.license):''}</small></div><button class="small" data-play="${i}">▶</button><button class="small" data-queue="${i}">＋</button><button class="heart" data-fav="${i}">${favorites.some(x=>x.id===t.id)?'♥':'♡'}</button></div>`).join('');
+ if(!list.length)markup=state.pending?'<div class="empty">Ищу аудиозаписи…</div>':'<div class="empty">Подходящих записей не найдено. Попробуй другое написание или включи показ альтернативных версий.</div>';
+ if(state.pending&&list.length)markup+='<div class="hint" style="text-align:center;margin-top:10px">Проверяю остальные каталоги…</div>';
+ if(!state.pending&&KEYS.some(k=>state.more[k]))markup+='<button class="btn more" id="more">Показать ещё</button>';
+ $('results').innerHTML=markup;
+}
+const Player={queue:[],index:-1,
+ play(list,i){if(!list?.[i])return;this.queue=list.slice();this.index=i;this.start();},
+ start(){
+  const t=this.queue[this.index];if(!t)return;
+  $('title').textContent=t.title;$('artist').textContent=t.artist+' · '+(SOURCES[t.src]||'Моя музыка');$('seek').value=0;
+  if('mediaSession'in navigator&&typeof MediaMetadata!=='undefined'){try{navigator.mediaSession.metadata=new MediaMetadata({title:t.title,artist:t.artist,album:t.album||SOURCES[t.src]||'REPLAY',artwork:t.art?[{src:t.art,sizes:'480x480'}]:[]});}catch(e){}}
+  audio.src=t.url;audio.play().catch(()=>{$('artist').textContent='Не удалось запустить трек. Попробуй другой.';});
+ },
+ toggle(){if(!audio.src)return;if(audio.paused)audio.play().catch(()=>{});else audio.pause();},
+ next(){if(this.queue.length){this.index=(this.index+1)%this.queue.length;this.start();}},
+ prev(){if(!this.queue.length)return;if(audio.currentTime>5){audio.currentTime=0;return;}this.index=(this.index-1+this.queue.length)%this.queue.length;this.start();},
+ enqueue(t){if(!t)return;if(!this.queue.length){this.play([t],0);return;}this.queue.push(t);}
+};
+$('searchBtn').onclick=search;$('q').addEventListener('keydown',e=>{if(e.key==='Enter')search();});
+$('versions').onchange=()=>{if(!state)return;state.all=[];state.view=[];state.pages={audius:0,jamendo:0,archive:0};state.more={audius:true,jamendo:true,archive:true};state.status={};state.pending=0;searchToken++;runSearches(KEYS,searchToken);};
+$('chips').onclick=e=>{const b=e.target.closest('[data-filter]');if(!b||!state)return;state.filter=b.dataset.filter;render();};
+$('results').onclick=e=>{
+ const b=e.target.closest('button');if(!b)return;
+ if(b.id==='more'){const keys=KEYS.filter(k=>state?.more[k]);if(state&&!state.pending)runSearches(keys,searchToken);return;}
+ const i=Number(b.dataset.play??b.dataset.queue??b.dataset.fav),t=visibleResults[i];if(!t)return;
+ if(b.dataset.play!==undefined)Player.play(visibleResults,i);
+ if(b.dataset.queue!==undefined)Player.enqueue(t);
+ if(b.dataset.fav!==undefined){favorites=favorites.some(x=>x.id===t.id)?favorites.filter(x=>x.id!==t.id):[...favorites,t];saveFavorites();render();}
+};
+function renderFavorites(){
+ const el=$('favlist');if(!favorites.length){el.className='empty';el.textContent='Здесь появятся сохранённые треки.';return;}
+ el.className='';el.innerHTML=favorites.map((t,i)=>`<div class="result">${t.art?`<img src="${esc(t.art)}" alt="" onerror="this.style.display='none'">`:'<div class="thumb"></div>'}<div class="meta"><b>${esc(t.title)}</b><small>${esc(t.artist)} · ${SOURCES[t.src]||'Моя музыка'}</small></div><button class="small" data-fplay="${i}">▶</button><button class="heart" data-unfav="${i}">♥</button></div>`).join('');
+}
+$('favlist').onclick=e=>{const b=e.target.closest('button');if(!b)return;const i=Number(b.dataset.fplay??b.dataset.unfav);if(!Number.isInteger(i)||!favorites[i])return;if(b.dataset.fplay!==undefined)Player.play(favorites,i);else{favorites.splice(i,1);saveFavorites();renderFavorites();}};
+$('files').onchange=e=>{
+ objectUrls.forEach(URL.revokeObjectURL);objectUrls=[];localTracks=[...e.target.files].map((f,i)=>{const url=URL.createObjectURL(f);objectUrls.push(url);return{id:'local'+i,src:'local',title:f.name.replace(/\.[^.]+$/,''),artist:'Моя музыка',url};});
+ $('localList').innerHTML=localTracks.map((t,i)=>`<div class="result"><div class="meta"><b>${esc(t.title)}</b><small>Локальный файл</small></div><button class="small" data-local="${i}">▶</button></div>`).join('');
+};
+$('localList').onclick=e=>{const b=e.target.closest('[data-local]');if(b)Player.play(localTracks,Number(b.dataset.local));};
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{
+ document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));
+ ['discover','favorites','library'].forEach(id=>$(id).classList.toggle('hidden',id!==b.dataset.tab));
+ if(b.dataset.tab==='favorites')renderFavorites();
+});
+$('toggle').onclick=()=>Player.toggle();$('prev').onclick=()=>Player.prev();$('next').onclick=()=>Player.next();
+audio.ontimeupdate=()=>{$('seek').value=audio.duration?audio.currentTime/audio.duration*100:0;$('elapsed').textContent=formatTime(audio.currentTime);$('duration').textContent=formatTime(audio.duration);};
+$('seek').oninput=()=>{if(Number.isFinite(audio.duration))audio.currentTime=audio.duration*Number($('seek').value)/100;};
+audio.onended=()=>Player.next();audio.onplay=()=>{$('toggle').textContent='Ⅱ';if('mediaSession'in navigator)navigator.mediaSession.playbackState='playing';};
+audio.onpause=()=>{$('toggle').textContent='▶';if('mediaSession'in navigator)navigator.mediaSession.playbackState='paused';};
+if('mediaSession'in navigator){const handler=(action,fn)=>{try{navigator.mediaSession.setActionHandler(action,fn);}catch(e){}};handler('play',()=>audio.play());handler('pause',()=>audio.pause());handler('previoustrack',()=>Player.prev());handler('nexttrack',()=>Player.next());handler('seekto',d=>{if(typeof d.seekTime==='number'&&Number.isFinite(audio.duration))audio.currentTime=d.seekTime;});}
+</script>
+</body>
+</html>
