@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#090b0a"><title>REPLAY — Music</title>
+<style>
+:root{color-scheme:dark;--bg:#090b0a;--panel:#141816;--muted:#89948d;--green:#b8ff55;--line:#252d28}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 80% -10%,#263b25 0,transparent 40%),var(--bg);color:#f4f7f3;font:15px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:env(safe-area-inset-top) 16px 140px}header{display:flex;justify-content:space-between;padding:18px 2px 22px}.brand{font-weight:900;letter-spacing:4px;font-size:22px}.brand span{color:var(--green)}.tag,.hint,.meta small,footer{color:var(--muted)}h1{font-size:29px;margin:8px 0}.sub{color:var(--muted);margin:8px 0 20px}.search{display:flex;gap:8px;background:#171d19;border:1px solid var(--line);border-radius:15px;padding:7px}.search input{min-width:0;flex:1;background:none;border:0;color:white;padding:8px;font-size:15px}.btn{border:0;border-radius:11px;background:var(--green);color:#10150d;font-weight:800;padding:11px 14px}.tabs{display:flex;gap:8px;overflow:auto;margin:17px 0}.tab,.small{border:1px solid var(--line);background:#202822;color:#fff;border-radius:20px;padding:9px 13px}.tab.active{color:var(--green);border-color:#526849}.section{display:flex;justify-content:space-between;align-items:center;margin:22px 0 12px}.section h2{font-size:17px;margin:0}.sourcegrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.source{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;text-decoration:none;color:white}.source b,.source small{display:block}.source small{color:var(--muted);margin-top:5px}.result{display:flex;gap:10px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:9px}.result img{width:50px;height:50px;border-radius:8px;object-fit:cover}.meta{min-width:0;flex:1}.meta b,.meta small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.meta small{font-size:12px;margin-top:4px}.heart{border:0;background:none;color:var(--green);font-size:19px}.empty{border:1px dashed #39433c;border-radius:15px;padding:22px;text-align:center;color:var(--muted);line-height:1.5}footer{font-size:11px;line-height:1.5;margin-top:24px}.hidden{display:none!important}.player{position:fixed;bottom:0;left:0;right:0;background:rgba(12,16,13,.97);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom))}.now{display:flex;align-items:center;gap:10px}.nowmeta{min-width:0;flex:1}.nowmeta b,.nowmeta small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nowmeta small{color:var(--muted);font-size:11px;margin-top:3px}.controls{display:flex;gap:8px;align-items:center}.play{width:42px;height:42px;border-radius:50%;border:0;background:var(--green);font-size:18px}.progress{width:100%;accent-color:var(--green);margin-top:9px}.time{display:flex;justify-content:space-between;color:var(--muted);font-size:10px}audio{display:none}
+.result+.result{margin-top:8px}
+</style></head><body>
+<header><div class="brand">RE<span>PLAY</span></div><div class="tag">YOUR MUSIC SPACE</div></header>
+<h1>Включай своё.</h1><div class="sub">Аудиозаписи из открытых каталогов.</div>
+<div class="search"><input id="q" placeholder="Трек, артист или альбом…"><button class="btn" id="searchBtn">Найти</button></div>
+<div class="tabs"><button class="tab active" data-tab="discover">Обзор</button><button class="tab" data-tab="favorites">Избранное</button><button class="tab" data-tab="library">Моя музыка</button></div>
+<section id="discover"><div class="section"><h2>Другие каталоги</h2><span class="hint">Поиск по источникам</span></div><div class="sourcegrid"><a class="source" id="yt" target="_blank" rel="noopener"><b>YouTube</b><small>Открыть поиск</small></a><a class="source" id="sc" target="_blank" rel="noopener"><b>SoundCloud</b><small>Открыть поиск</small></a></div><div class="section"><h2>Открытая музыка</h2><span class="hint">Internet Archive</span></div><div id="results"><div class="empty">Введи название песни или исполнителя. Поиск показывает аудиозаписи Internet Archive длительностью от 1 минуты (если длительность известна).</div></div></section>
+<section id="favorites" class="hidden"><div class="section"><h2>Избранное</h2></div><div id="favlist" class="empty">Здесь появятся сохранённые треки.</div></section>
+<section id="library" class="hidden"><div class="section"><h2>Твоя библиотека</h2></div><label class="btn">＋ Добавить аудио<input id="files" type="file" accept="audio/*" multiple hidden></label><p class="hint">Выбери аудиофайлы из приложения «Файлы».</p><div id="localList"></div></section>
+<footer>REPLAY ищет аудиозаписи в Internet Archive. Не все записи там являются полными версиями песен, а длительность указана только если она есть в метаданных. Это не полный каталог Spotify: коммерческие релизы могут отсутствовать. YouTube и SoundCloud открываются отдельно. Фоновое воспроизведение зависит от iPhone, браузера и источника.</footer>
+<div class="player"><div class="now"><div class="nowmeta"><b id="title">Ничего не играет</b><small id="artist">Выбери трек</small></div><div class="controls"><button class="small" id="prev">↶</button><button class="play" id="toggle">▶</button><button class="small" id="next">↷</button></div></div><input class="progress" id="seek" type="range" min="0" max="100" value="0"><div class="time"><span id="elapsed">0:00</span><span id="duration">0:00</span></div></div>
+<audio id="audio" playsinline preload="metadata"></audio>
+<script>
+const $=id=>document.getElementById(id),audio=$('audio');
+let queue=[],results=[],index=-1,searchId=0,locals=[];
+let favs=[];try{favs=JSON.parse(localStorage.getItem('rp_favs_v2')||'[]');if(!Array.isArray(favs))favs=[];}catch(e){favs=[];}
+const MIN_DURATION=60;      // секунд: отбрасываем только если длительность точно известна и меньше
+const PAGE_ROWS=50;         // записей на страницу поиска
+const MAX_PAGES=3;          // максимум страниц поиска (до 150 записей)
+const MAX_DOCS=120;         // сколько записей проверяем по метаданным
+const MAX_RESULTS=60;       // сколько треков показываем максимум
+const CONCURRENCY=5;        // одновременных запросов метаданных
+const FETCH_TIMEOUT=15000;
+const AUDIO_EXT=/\.(mp3|ogg|oga|flac|wav|m4a)$/i;
+const BAD_NAME=/sample|thumb|spectrogram|waveform|__ia_|_itemimage|\.afpk/i;
+const BAD_FORMAT=/spectrogram|thumbnail|item tile|metadata|image|text|json|xml|torrent|archive bittorrent|sqlite|checksums|png|jpeg|gif|m3u/i;
+const EXT_RANK={mp3:5,m4a:4,flac:3,wav:2,ogg:1,oga:1};
+const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=n=>isFinite(n)?Math.floor(n/60)+':'+String(Math.floor(n%60)).padStart(2,'0'):'0:00';
+function fmtDur(n){n=Math.floor(n);const h=Math.floor(n/3600),m=Math.floor(n%3600/60),s=n%60;return h?h+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'):m+':'+String(s).padStart(2,'0');}
+const isLocal=t=>String(t&&t.id||'').indexOf('local')===0;
+function durLabel(t){return t&&t.duration>0?fmtDur(t.duration):'длительность неизвестна';}
+function subLine(t){return isLocal(t)?esc(t.artist):esc(t.artist)+' · '+esc(durLabel(t))+' · Internet Archive';}
+
+/* Длительность: секунды ("245.3"), "m:ss", "h:mm:ss". Если не удаётся разобрать — null (не отбрасываем). */
+function parseDur(v){
+  if(Array.isArray(v))v=v[0];
+  if(v===null||v===undefined)return null;
+  const s=String(v).trim();
+  if(!s)return null;
+  if(/^\d+(\.\d+)?$/.test(s)){const n=parseFloat(s);return n>0&&isFinite(n)?n:null;}
+  const parts=s.split(':');
+  if(parts.length<2||parts.length>3)return null;
+  let total=0;
+  for(const p of parts){if(!/^\d+(\.\d+)?$/.test(p.trim()))return null;total=total*60+parseFloat(p);}
+  return total>0&&isFinite(total)?total:null;
+}
+function fileDuration(f){
+  const keys=['length','duration','runtime'];
+  for(const k of keys){const d=parseDur(f[k]);if(d)return d;}
+  return null;
+}
+function itemDuration(m){
+  const keys=['runtime','duration','length'];
+  for(const k of keys){const d=parseDur(m[k]);if(d)return d;}
+  return null;
+}
+function extOf(name){const m=/\.([a-z0-9]+)$/i.exec(name||'');return m?m[1].toLowerCase():'';}
+function baseName(name){return String(name||'').split('/').pop();}
+
+/* Выбор лучшего аудиофайла записи. Возвращает {file,duration} или null (если все файлы точно короче 60 с). */
+function pickFile(files,m){
+  let cands=(files||[]).filter(f=>{
+    const n=f&&f.name;
+    if(!n||!AUDIO_EXT.test(n))return false;
+    if(BAD_NAME.test(baseName(n)))return false;
+    if(f.format&&BAD_FORMAT.test(String(f.format))&&!/mp3|ogg|flac|wav|aac|m4a|mpeg|audio/i.test(String(f.format)))return false;
+    const size=Number(f.size||0);
+    if(size&&size<50000)return false;
+    return true;
+  });
+  if(!cands.length)return null;
+  const single=cands.length===1;
+  cands=cands.map(f=>{
+    let d=fileDuration(f);
+    if(!d&&single)d=itemDuration(m);
+    return{file:f,duration:d,size:Number(f.size||0),rank:EXT_RANK[extOf(f.name)]||0,original:String(f.source||'').toLowerCase()==='original'?1:0};
+  });
+  cands=cands.filter(c=>!(c.duration&&c.duration<MIN_DURATION));
+  if(!cands.length)return null;
+  cands.sort((a,b)=>{
+    const ta=a.duration?2:1,tb=b.duration?2:1;
+    if(ta!==tb)return tb-ta;                                  // сначала файлы с известной длительностью ≥ 60 с
+    const da=Math.round((a.duration||0)/3),db=Math.round((b.duration||0)/3);
+    if(da!==db)return db-da;                                  // более длинный файл (полная версия) лучше
+    if(a.rank!==b.rank)return b.rank-a.rank;                  // формат, удобный для Safari: mp3 > m4a > flac > wav > ogg
+    if(a.size!==b.size)return b.size-a.size;                  // больший размер — обычно выше битрейт
+    return b.original-a.original;
+  });
+  return cands[0];
+}
+
+function play(list,i){
+  if(!list||!list.length||!list[i])return;
+  queue=list;index=i;const t=list[i];
+  $('title').textContent=t.title;
+  $('artist').textContent=isLocal(t)?t.artist:t.artist+' · '+durLabel(t);
+  audio.src=t.url;
+  audio.play().then(()=>$('toggle').textContent='Ⅱ').catch(()=>$('toggle').textContent='▶');
+  if('mediaSession'in navigator&&typeof MediaMetadata!=='undefined'){try{navigator.mediaSession.metadata=new MediaMetadata({title:t.title||'',artist:t.artist||''});}catch(e){}}
+}
+function render(items){
+  $('results').innerHTML=items.length?items.map((t,i)=>`<div class="result"><div class="meta"><b>${esc(t.title)}</b><small>${subLine(t)}</small></div><button class="small" data-play="${i}">▶</button><button class="heart" data-fav="${i}">${favs.some(x=>x.id===t.id)?'♥':'♡'}</button></div>`).join(''):'<div class="empty">Подходящих записей не найдено. Попробуй другое написание или проверь YouTube / SoundCloud.</div>';
+}
+async function fetchJSON(url){
+  const ctrl=typeof AbortController!=='undefined'?new AbortController():null;
+  const timer=ctrl?setTimeout(()=>ctrl.abort(),FETCH_TIMEOUT):null;
+  try{
+    const r=await fetch(url,ctrl?{signal:ctrl.signal}:undefined);
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    return await r.json();
+  }finally{if(timer)clearTimeout(timer);}
+}
+/* Возвращает трек, null (запись не подходит) или бросает ошибку (сеть/запрос). */
+async function metadata(id){
+  const j=await fetchJSON('https://archive.org/metadata/'+encodeURIComponent(id));
+  if(!j||typeof j!=='object')return null;
+  const m=j.metadata||{};
+  const pick=pickFile(j.files||[],m);
+  if(!pick)return null;
+  const f=pick.file;
+  const url='https://archive.org/download/'+encodeURIComponent(id)+'/'+f.name.split('/').map(encodeURIComponent).join('/');
+  const creator=Array.isArray(m.creator)?m.creator.join(', '):(m.creator||'Internet Archive');
+  const title=Array.isArray(m.title)?m.title[0]:(m.title||id);
+  return{id,title:String(title),artist:String(creator),url,duration:pick.duration||null,source:'Internet Archive'};
+}
+async function searchPage(q,page){
+  const p=new URLSearchParams();
+  p.set('q',q);
+  p.append('fl[]','identifier');p.append('fl[]','title');p.append('fl[]','creator');
+  p.append('sort[]','downloads desc');
+  p.set('rows',String(PAGE_ROWS));p.set('page',String(page));p.set('output','json');
+  const j=await fetchJSON('https://archive.org/advancedsearch.php?'+p.toString());
+  return(j&&j.response&&j.response.docs)||[];
+}
+async function pool(items,limit,worker,stop){
+  let i=0;
+  const run=async()=>{while(i<items.length&&!stop()){const it=items[i++];await worker(it);}};
+  await Promise.all(Array.from({length:Math.min(limit,items.length)},run));
+}
+async function search(){
+  const term=$('q').value.trim();if(!term)return;
+  $('yt').href='https://www.youtube.com/results?search_query='+encodeURIComponent(term);
+  $('sc').href='https://soundcloud.com/search?q='+encodeURIComponent(term);
+  const myId=++searchId;
+  results=[];
+  $('results').innerHTML='<div class="empty">Ищу аудиозаписи…</div>';
+  try{
+    const safe=term.replace(/[\\"]/g,' ').replace(/[{}[\]^~*?:()!\/+\-&|]/g,' ').replace(/\s+/g,' ').trim();
+    if(!safe){$('results').innerHTML='<div class="empty">Введи название песни или исполнителя.</div>';return;}
+    const q='mediatype:audio AND (title:"'+safe+'" OR creator:"'+safe+'" OR subject:"'+safe+'")';
+    const seen=new Set(),docs=[];let pageErrors=0;
+    for(let page=1;page<=MAX_PAGES&&docs.length<MAX_DOCS;page++){
+      let batch;
+      try{batch=await searchPage(q,page);}catch(e){pageErrors++;break;}
+      if(myId!==searchId)return;
+      for(const d of batch){if(d&&d.identifier&&!seen.has(d.identifier)){seen.add(d.identifier);docs.push(d);}}
+      if(batch.length<PAGE_ROWS)break;
+    }
+    if(myId!==searchId)return;
+    if(!docs.length){
+      $('results').innerHTML=pageErrors?'<div class="empty">Каталог временно недоступен. Попробуй позже.</div>':'<div class="empty">Подходящих записей не найдено. Попробуй другое написание или проверь YouTube / SoundCloud.</div>';
+      return;
+    }
+    let failures=0,done=0;
+    const list=docs.slice(0,MAX_DOCS);
+    await pool(list,CONCURRENCY,async d=>{
+      try{
+        const t=await metadata(d.identifier);
+        if(myId!==searchId)return;
+        if(t&&results.length<MAX_RESULTS){results.push(t);render(results);}
+      }catch(e){failures++;}
+      done++;
+    },()=>myId!==searchId||results.length>=MAX_RESULTS);
+    if(myId!==searchId)return;
+    if(!results.length){
+      $('results').innerHTML=failures>=Math.max(1,done)?'<div class="empty">Каталог временно недоступен. Попробуй позже.</div>':'<div class="empty">Подходящих записей не найдено. Попробуй другое написание или проверь YouTube / SoundCloud.</div>';
+    }else render(results);
+  }catch(e){
+    if(myId===searchId)$('results').innerHTML='<div class="empty">Каталог временно недоступен. Попробуй позже.</div>';
+  }
+}
+$('searchBtn').onclick=search;$('q').addEventListener('keydown',e=>{if(e.key==='Enter')search()});
+$('results').onclick=e=>{
+  const b=e.target.closest?e.target.closest('button'):e.target;if(!b)return;
+  const p=b.dataset.play,f=b.dataset.fav;
+  if(p!==undefined)play(results,Number(p));
+  if(f!==undefined){
+    const t=results[Number(f)];if(!t)return;
+    favs=favs.some(x=>x.id===t.id)?favs.filter(x=>x.id!==t.id):[...favs,t];
+    try{localStorage.setItem('rp_favs_v2',JSON.stringify(favs));}catch(err){}
+    render(results);
+  }
+};
+function renderFav(){
+  const el=$('favlist');
+  if(!favs.length){el.className='empty';el.textContent='Здесь появятся сохранённые треки.';return;}
+  el.className='';
+  el.innerHTML=favs.map((t,i)=>`<div class="result"><div class="meta"><b>${esc(t.title)}</b><small>${subLine(t)}</small></div><button class="small" data-fplay="${i}">▶</button><button class="heart" data-funfav="${i}">♥</button></div>`).join('');
+}
+$('favlist').onclick=e=>{
+  const b=e.target.closest?e.target.closest('button'):e.target;if(!b)return;
+  const i=b.dataset.fplay,u=b.dataset.funfav;
+  if(i!==undefined)play(favs,Number(i));
+  if(u!==undefined){
+    favs=favs.filter((x,k)=>k!==Number(u));
+    try{localStorage.setItem('rp_favs_v2',JSON.stringify(favs));}catch(err){}
+    renderFav();render(results);
+  }
+};
+$('files').onchange=e=>{
+  locals=[...e.target.files].map((f,i)=>({id:'local'+i,title:f.name.replace(/\.[^.]+$/,''),artist:'Моя музыка',url:URL.createObjectURL(f)}));
+  $('localList').innerHTML=locals.map((t,i)=>`<div class="result"><div class="meta"><b>${esc(t.title)}</b><small>Локальный файл</small></div><button class="small" data-local="${i}">▶</button></div>`).join('');
+};
+$('localList').onclick=e=>{const b=e.target.closest?e.target.closest('button'):e.target;if(!b)return;const i=b.dataset.local;if(i!==undefined)play(locals,Number(i));};
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));['discover','favorites','library'].forEach(id=>$(id).classList.toggle('hidden',id!==b.dataset.tab));if(b.dataset.tab==='favorites')renderFav();});
+$('toggle').onclick=()=>{if(!audio.src)return;if(audio.paused)audio.play().then(()=>$('toggle').textContent='Ⅱ').catch(()=>{});else{audio.pause();$('toggle').textContent='▶';}};
+$('prev').onclick=()=>{if(queue.length)play(queue,(index-1+queue.length)%queue.length)};$('next').onclick=()=>{if(queue.length)play(queue,(index+1)%queue.length)};
+audio.ontimeupdate=()=>{$('seek').value=audio.duration?audio.currentTime/audio.duration*100:0;$('elapsed').textContent=fmt(audio.currentTime);$('duration').textContent=fmt(audio.duration)};
+$('seek').oninput=()=>{if(audio.duration)audio.currentTime=audio.duration*$('seek').value/100};
+audio.onended=()=>{if(queue.length)play(queue,(index+1)%queue.length)};
+audio.onpause=()=>{$('toggle').textContent='▶'};
+audio.onplay=()=>{$('toggle').textContent='Ⅱ'};
+audio.onerror=()=>{$('artist').textContent='Не удалось воспроизвести этот файл. Попробуй следующий трек.';$('toggle').textContent='▶';};
+if('mediaSession'in navigator){try{navigator.mediaSession.setActionHandler('play',()=>audio.play());navigator.mediaSession.setActionHandler('pause',()=>audio.pause());navigator.mediaSession.setActionHandler('previoustrack',()=>$('prev').click());navigator.mediaSession.setActionHandler('nexttrack',()=>$('next').click());}catch(e){}}
+</script></body></html>
